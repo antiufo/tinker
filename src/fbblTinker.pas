@@ -68,45 +68,18 @@ Type
                    Direzione    : Integer;
                    Progresso    : Real;
                    InEsecuzione : Boolean;
-                   //pDestinazione : TpElemento;
                    Destinazione          : TPosizione3d;  // Posizione logica di fine animazione
                  End;
   TElemento = Record
                 Tipo         : TTipoElemento;
                 Orientamento : Integer;
-              {  Pos1: Real;
-                Pos2: Real;
-                Pos3: Real;
-                Pos4: Real;
-               }
                 Posizione             : TPosizione3d;  // Posizione logica prima dell'animazione animazione
                 PosizioneFisica       : TPosizione3d;  // Posizione effettiva nello spazio fisico (cambia durante l'animazione)
                 Animazione            : TAnimazione;   // Informazioni sulla direzione di animazione
-                //X                 : Real;
-                //Y                 : Real;
-                //Z                 : Real;
                 PrioritaDiDisegno : Real;
                 Attivato     : Boolean;
                 Colore       : Integer;
               End;
-
-
-
-
-
-  {TpeListaElementi = ^TeListaElementi;
-
-  TeListaElementi = Record
-                      pSuccessivo : TpeListaElementi;
-                      Elemento    : TElemento;
-                    End;
-                    
-  TListaElementi = Record
-                     pInizio   : TpeListaElementi;
-                     pFine     : TpeListaElementi;
-                   End;}
-
-
               
 
   TArraypElementi = Array[1..1000] Of TpElemento;  // BUGBUG: attenzione, massimo mille elementi, poi crash
@@ -115,10 +88,6 @@ Type
                        Vettore    : TArraypElementi;
                        Dimensione : Integer;
                      End;              
-
-
-
-
 
 
 Const
@@ -130,9 +99,6 @@ Const
 
   AltezzaMassima : Integer = 6;
 
-
-
-
 Var
   PaintBox : TPaintBox;
   Immagini : TImmagini;
@@ -140,20 +106,17 @@ Var
   IncrementoCoordinataX : Real;
   IncrementoCoordinataY : Real;
   Bitmap                : TBitmap;
-  Occupato              : Boolean;
   Rotazione             : TInformazioniRotazione;
 Var
   Elementi              : TVettorepElementi;
-Inizializzato         : Boolean = False;
   pRobot                : TpElemento;
 
-  //KeyBoardState : TKeyboardState;
+
 
 
 Procedure InizializzazioneGioco();
 Procedure AggiuntaElemento(Const Tipo : TTipoElemento; Posizione : TPosizione3d; Orientamento : Integer; Attivato : Boolean; Colore : Integer); overload;
 Procedure AggiuntaElemento(Const Tipo : TTipoElemento; X: Real; Y: Real; Z: Real; Orientamento : Integer; Attivato : Boolean; Colore : Integer); overload;
-//Procedure AggiornaPrioritaDiDisegno(Var Elemento : TpElemento);
 Procedure CaricamentoImmagini();
 Procedure CaricamentoQuattroImmagini(Var QuattroImmagini : TQuattroBitmap; Const BaseNome : String);
 Procedure CaricamentoImmagine(Var Bitmap : TBitmap; Const NomeFile : String);
@@ -176,9 +139,6 @@ Procedure GiraRobot(Const Direzione : Integer);
 Procedure AvanzaRobot;
 Function CoordinateElementoVicino(Const Elemento : TpElemento; Const Direzione : Integer) : TPosizione3d;
 
-//Procedure InizializzazioneLista(Var Lista : TListaElementi);
-//Procedure InserimentoInLista(Const Elemento : TElemento; Var Lista : TListaElementi);
-
 Procedure AggiornamentoPrioritaDiDisegno;
 Function PrioritaDiDisegno(Const Posizione : TPosizione3d) : Real;
 Procedure OrdinamentoElementiPerPrioritaDiDisegno;
@@ -188,9 +148,6 @@ Procedure Scambio(Var Elemento1 : Integer;    Var Elemento2 : Integer); overload
 
 Function EntroILimitiDellaScacchiera(Const Posizione : TPosizione3d) : Boolean;
 
-Function ElementoInPosizione(Const Posizione : TPosizione3d) : TpElemento;
-
-//Function Spostabile(Const pElemento : TpElemento; Const Direzione : Integer) : Boolean;
 Procedure Spostamento(Var pElemento : TpElemento; Const Direzione : Integer);
 
 Procedure PreparazioneAnimazione(Var pElemento : TpElemento; { Var pDestinazione : TpElemento;} Const Direzione : Integer);
@@ -204,7 +161,6 @@ Function Instabile(Const pElemento : TpElemento) : Boolean;
 
 Procedure EsecuzioneLogicaDiGioco();
 
-//Procedure ControlloPosizioneRaggiungibile(Const Posizione : TPosizione3d; Const EntitaDiAttraversamento : TEntitaDiAttraversamento; Const DallAlto : Boolean; Out Raggiungibile : Boolean; Out ElementiPresenti : TVettorepElementi; Const Direzione : Integer);
 Function ElementoAttraversabile(Const pElemento : TpElemento; Const EntitaDiAttraversamento : TEntitaDiAttraversamento; Const Direzione : Integer) : Boolean;
 
 Procedure EsecuzioneEvento(Var pElemento : TpElemento; Var pSorgente : TpElemento; Const Direzione : Integer);
@@ -213,9 +169,6 @@ Function DirezioneRelativaElementi(Const Posizione1 : TPosizione3d; Const Posizi
 
 
 Function Spostabile(Const pElemento : TpElemento; Const ElementoAttraversante : TEntitaDiAttraversamento; Const Direzione : Integer) : Boolean;
-
-
-//Procedure EsecuzioneLogicaEventi(Const Posizione : TPosizione3d; Const EntitaDiAttraversamento : TEntitaDiAttraversamento; Const DallAlto : Boolean; Var pElemento : TpElemento);
 
 Function PosizioniUguali(Const Posizione1 : TPosizione3d; Const Posizione2 : TPosizione3d) : Boolean;
 Procedure CambioStatoAscensore(Var pAscensore : TpElemento; Var pCarico : TpElemento; Const Attivato : Boolean);
@@ -228,9 +181,6 @@ Procedure InizializzazioneGioco;
 Begin
   DimensioneScacchiera := 8;
   Rotazione.OrientamentoScacchiera := 0;
-  //InizializzazioneLista(Elementi);
-
-
 End;
 
 Procedure AggiuntaElemento(Const Tipo : TTipoElemento; Posizione : TPosizione3d; Orientamento : Integer; Attivato : Boolean; Colore : Integer); overload;
@@ -243,21 +193,12 @@ Begin
   New(pElemento);
   Elementi.Vettore[Indice] := pElemento;
 
- // Posizione.Z := 3;
-
   pElemento^.Tipo := Tipo;
   pElemento^.Orientamento := Orientamento;
   pElemento^.Posizione := Posizione;
   pElemento^.PosizioneFisica := Posizione;
-  //Elementi.Vettore[Indice].Posizione.X := X;
-  //Elementi.Vettore[Indice].Posizione.Y := Y;
-  //Elementi.Vettore[Indice].Posizione.Z := Z;
-
-  //AggiornaPrioritaDiDisegno(pElemento); spostato in un unico ciclo prima di disegnare
   pElemento^.Attivato := Attivato;
   pElemento^.Colore := Colore;
-
-  //InserimentoInLista(Elemento, Elementi);
 
   If Tipo = Robot Then pRobot := pElemento;
 End;
@@ -272,12 +213,6 @@ Begin
 
   AggiuntaElemento(Tipo, Posizione, Orientamento, Attivato, Colore);
 End;
-
-{Procedure AggiornaPrioritaDiDisegno;
-Begin
-  //Elemento.PrioritaDiDisegno := Elemento.Posizione.X * 65536 + Elemento.Posizione.Y * 256 + Elemento.Posizione.Z;
-  Elemento.PrioritaDiDisegno := Elemento.Posizione.X + Elemento.Posizione.Y + Elemento.Posizione.Z;
-End;  }
 
 
 Procedure CaricamentoImmagini;
@@ -340,7 +275,6 @@ procedure DisegnoSchermata;
 var
   AltezzaTotale2d : Real;
 begin
-  Occupato := True; // DIRTY: Occupato è probabilmente inutile
   AltezzaTotale2d := (AltezzaMassima) * Dimensioni2dCubo.c + (DimensioneScacchiera+1)*2*Dimensioni2dCubo.a;
   IncrementoCoordinataX := Bitmap.Width Div 2;
   IncrementoCoordinataY := (Bitmap.Height - AltezzaTotale2d) / 2 + (AltezzaMassima-1) * Dimensioni2dCubo.c;
@@ -351,22 +285,15 @@ begin
 
   If Rotazione.AnimazioneInEsecuzione Then Begin
     Rotazione.PosizioneAnimazione := Rotazione.PosizioneAnimazione + 0.09 - Rotazione.PosizioneAnimazione * 0.06;
-    //Rotazione.PosizioneAnimazione := Rotazione.PosizioneAnimazione + 0.01 + Rotazione.PosizioneAnimazione * 0.146;
     DisegnoAnimazioneRotazione();
     If Rotazione.PosizioneAnimazione >= 0.95 Then Begin // È finita
       Rotazione.AnimazioneInEsecuzione := False;
-      //Occupato := False;
     End;
   End Else Begin
     DisegnoScacchiera();
     DisegnoElementi();
   End;
 
-  //DisegnoArea(Immagini.Cubo, 2, 3, 1);
-  //DisegnoArea(Immagini.Cubo2, 4, 1, 1);
-
-
-  Occupato := False;
   MostraFrame();
 End;
 
@@ -443,34 +370,8 @@ Procedure DisegnoElementi();
 Var
   Indice         : Integer;
   pElemento      : TpElemento;
-{Var
-  Contatore                      : Integer;
-  Indice                         : Integer;
-  PrioritaUltimoBloccoDisegnato  : Real;
-  IndiceMinimoAttuale            : Integer;
-  MinimoAttuale                  : Real;
-  pElemento                      : TpElemento; }
 Begin
   If Elementi.Dimensione = 0 Then Exit;
-  //FIXED: se due elementi hanno la stessa priorità ne viene disegnato solo uno
-
-  {PrioritaUltimoBloccoDisegnato := -1;
-
-  For Contatore := 1 To Elementi.Dimensione Do Begin// Non è un indice
-    IndiceMinimoAttuale := -1;
-    MinimoAttuale := Infinity;
-    For Indice := 1 To Elementi.Dimensione Do Begin
-      If (Elementi.Vettore[Indice].PrioritaDiDisegno < MinimoAttuale) And (Elementi.Vettore[Indice].PrioritaDiDisegno > PrioritaUltimoBloccoDisegnato) Then Begin
-        IndiceMinimoAttuale := Indice;
-        MinimoAttuale := Elementi.Vettore[Indice].PrioritaDiDisegno;
-      End;
-    End;
-    PrioritaUltimoBloccoDisegnato := MinimoAttuale;
-    pElemento := Elementi.Vettore[IndiceMinimoAttuale];
-    DisegnaArea(ImmagineDaDisegnare(pElemento), pElemento^.Posizione.X, pElemento^.Posizione.Y, pElemento^.Posizione.Z);
-  End;
-  }
-
   AggiornamentoPrioritaDiDisegno();
   OrdinamentoElementiPerPrioritaDiDisegno();
 
@@ -478,16 +379,7 @@ Begin
     pElemento := Elementi.Vettore[Indice];
     DisegnoArea(ImmagineDaDisegnare(pElemento), pElemento^.PosizioneFisica.X, pElemento^.PosizioneFisica.Y, pElemento^.PosizioneFisica.Z);
   End;
-
 End;
-
-
-
-
-
-
-
-
 
 Function ImmagineDaDisegnare;
 Begin
@@ -505,24 +397,6 @@ Begin
     ImmagineDaDisegnare := Immagini.Cubo;
   End;
 
-
-    {
-  If pElemento^.Tipo = Robot Then Begin
-    ImmagineDaDisegnare := Immagini.Robot[pElemento^.Orientamento];
-    Exit;
-  End;
-  If pElemento^.Tipo = BloccoFisso Then Begin
-    ImmagineDaDisegnare := Immagini.Cubo2;
-    Exit;
-  End;
-  If pElemento^.Tipo = BloccoMobile Then Begin
-    ImmagineDaDisegnare := Immagini.Cubo;
-    Exit;
-  End;
-
-  }
-  
-  //ImmagineDaDisegnare := Immagini.Cubo;
 End;
 
 
@@ -532,7 +406,6 @@ Var
   Indice    : Integer;
   pElemento : TpElemento;
 Begin
-  //Occupato := True;
   Rotazione.OrientamentoScacchiera := NuovoOrientamento(Rotazione.OrientamentoScacchiera, Direzione);
   Rotazione.Direzione := Direzione;
   Rotazione.PosizioneAnimazione := 0;
@@ -548,16 +421,7 @@ Begin
     If Direzione = 1
       Then pElemento^.PosizioneFisica.X := DimensioneScacchiera + 1 - pElemento^.PosizioneFisica.X
       Else pElemento^.PosizioneFisica.Y := DimensioneScacchiera + 1 - pElemento^.PosizioneFisica.Y;
-    //AggiornaPrioritaDiDisegno(Elementi.Vettore[Indice]);
-
-
-    //BUGBUG: se la scacchiera ruota mentre qualcosa si muove c'è qualcosa che non va
-    {If pElemento^.Animazione.InEsecuzione Then Begin
-      //Scambio(pElemento^.Animazione.X, pElemento^.Animazione.Y);
-      If Direzione = 1
-        Then pElemento^.Animazione.X := - pElemento^.Animazione.X
-        Else pElemento^.Animazione.Y := - pElemento^.Animazione.Y;
-    End;}
+     //BUGBUG: se la scacchiera ruota mentre qualcosa si muove c'è qualcosa che non va
   End;
 End;
 
@@ -587,66 +451,15 @@ End;
 
 
 Procedure AvanzaRobot;
-Var
-  Destinazione     : TPosizione3d;
-//  Raggiungibile    : Boolean;
-//  ElementiPresenti : TVettorepElementi;
-
-//  Indice           : Integer;
-//  pElemento    : TpElemento;
 Begin
-  Destinazione := CoordinateElementoVicino(pRobot, pRobot^.Orientamento);
-
-  //If Not Spostabile(pRobot, pRobot^.Orientamento);
-
   If Not Spostabile(pRobot, Personaggio, pRobot^.Orientamento) Then Exit;
-
-  //EsecuzioneLogicaEventi(Destinazione, Personaggio, False, pRobot);
-
-  //ControlloPosizioneRaggiungibile(Destinazione, Personaggio, False, Raggiungibile, ElementiPresenti, pRobot^.Orientamento);
-
-
-  //If Not Raggiungibile Then Exit;
-
-  //EsecuzioneEventi(ElementiPresenti, Personaggio, False);
-
-  //For Indice := 1 To ElementiPresenti.Dimensione Do Begin
-  //  EsecuzioneEvento(ElementiPresenti.Vettore[Indice], pRobot, False);
-  //End;
-
-  
-
-  //If Not PosizioneRaggiungibile(Destinazione, True, False) Then Exit;
-
-  {pElemento := ElementoInPosizione(Destinazione);
-  If pElemento <> Nil Then Begin
-    If pElemento^.Tipo = BloccoFisso Then Exit;
-    If pElemento^.Tipo = BloccoMobile Then Begin
-       If Spostabile(pElemento, pRobot^.Orientamento) Then Begin
-           Spostamento(pElemento, pRobot^.Orientamento);
-           PreparazioneAnimazione(pElemento);
-           //pRobot^.Posizione := Destinazione;
-       End Else Begin
-           Exit;
-       End;    
-    End;
-  End;    }
-
-  //BUGBUG: va prima questo o esecuzione logica eventi?
   Spostamento(pRobot, pRobot^.Orientamento);
-
-  //pRobot^.Posizione := Destinazione;
-  //PreparazioneAnimazione(pRobot);
-  //AggiornaPrioritaDiDisegno(pRobot);
 End;
 
 Function CoordinateElementoVicino;
 Var
   Posizione : TPosizione3d;
 Begin
-  //If (Direzione < 0) Or (Direzione > 3) Then Begin
-  //  Posizione.X := 0/0;
-  //End;
   Posizione.X := Elemento.Posizione.X;
   Posizione.Y := Elemento.Posizione.Y;
   Posizione.Z := Elemento.Posizione.Z;
@@ -659,34 +472,6 @@ Begin
   CoordinateElementoVicino := Posizione;
 End;
 
-{
-Procedure InizializzazioneLista;
-Begin
-  Lista.pInizio := Nil;
-  Lista.pFine := Nil;
-End;
-
-
-Procedure InserimentoInLista;
-Var
-  pPenultimo : TpeListaElementi;
-Begin
-  If Lista.pInizio = Nil Then Begin
-     New(Lista.pInizio);
-     Lista.pFine := Lista.pInizio;
-     Lista.pInizio^.Elemento := Elemento;
-     Lista.pInizio^.pPrecedente = Nil;
-     Lista.pInizio^.pSuccessivo = Nil;
-  End Else Begin
-     New(Lista.pFine^.pSuccessivo);
-     pPenultimo := Lista.pFine;
-     Lista.pFine := pPenultimo^.pSuccessivo;
-     Lista.pFine^.Elemento := Elemento;
-     Lista.pFine^.pPrecedente = pPenultimo;
-     Lista.pFine^.pSuccessivo = Nil;
-  End;
-End;  }
-
 Procedure AggiornamentoPrioritaDiDisegno;
 Var
   Indice : Integer;
@@ -698,7 +483,6 @@ End;
 
 Function PrioritaDiDisegno;
 Begin
-  //PrioritaDiDisegno := Posizione.X * 65536 + Posizione.Y * 256 + Posizione.Z
   PrioritaDiDisegno := Posizione.X + Posizione.Y + Posizione.Z
 End;
 
@@ -760,96 +544,17 @@ Begin
     Else EntroILimitiDellaScacchiera := True;
 End;
 
-Function ElementoInPosizione;
-Var
-  Indice           : Integer;
-  pElemento        : TpElemento;
-  RicercaTerminata : Boolean;
-  ElementoTrovato  : Boolean;
-Begin
-  RicercaTerminata := False;
-  ElementoTrovato := False; // Per evitare il Warning di delphi
-  Indice := 0;
-  Repeat
-    Indice := Indice + 1;
-    pElemento := Elementi.Vettore[Indice];
-    If (
-         (pElemento^.Posizione.X = Posizione.X) And
-         (pElemento^.Posizione.Y = Posizione.Y) And
-         (pElemento^.Posizione.Z = Posizione.Z)
-       ) Then Begin
-           ElementoTrovato := True;
-           RicercaTerminata := True;
-         End Else Begin
-           If Indice = Elementi.Dimensione Then Begin
-             ElementoTrovato := False;
-             RicercaTerminata := True;
-           End;  
-         End;
-  Until RicercaTerminata;
-  If ElementoTrovato
-    Then ElementoInPosizione := pElemento
-    Else ElementoInPosizione := Nil;
-End;
- {
-Function Spostabile;
-Var
-  pElementoVicino : TpElemento;
-  Destinazione    : TPosizione3d;
-Begin
-  // Il blocco stesso è di natura spostabile?
-  If pElemento^.Tipo <> BloccoMobile Then Begin
-    Spostabile := False;
-    Exit;
-  End;
-
-  // Entro i limiti della scacchiera?
-  Destinazione := CoordinateElementoVicino(pElemento, Direzione);
-  If Not EntroILimitiDellaScacchiera(Destinazione) Then Begin
-    Spostabile := False;
-    Exit;
-  End;
-
-  // Ricorsivo per i blocchi vicini
-  pElementoVicino := ElementoInPosizione(Destinazione);
-  If pElementoVicino <> Nil Then Begin
-    If Not Spostabile(pElementoVicino, Direzione) Then Begin
-      Spostabile := False;
-      Exit;
-    End;
-  End;
-  Spostabile := True;
-End; }
 
 
 Procedure Spostamento;
 Var
-  //pElementoVicino             : TpElemento;
-  //Destinazione                : TPosizione3d;
   Destinazione                : TPosizione3d;
   PosizioneElementoSuperiore  : TPosizione3d;
   Indice  : Integer;
 Begin
   Destinazione := CoordinateElementoVicino(pElemento, Direzione);
 
-  //pElementoVicino := ElementoInPosizione(Destinazione);
-  //If pElementoVicino <> Nil Then Spostamento(pElementoVicino, Direzione);
-
   //BUGBUG: attenzione quando si distrugge un oggetto, il ciclo potrebbe corrompersi
-  //Indice:=0;
-
-
-  //PosizioneElementoSuperiore := pElemento^.Posizione;
-  //PosizioneElementoSuperiore.Z := PosizioneElementoSuperiore.Z + 1;
-
-  //pElementoVicino := ElementoInPosizione(PosizioneElementoSuperiore);
-  //If pElementoVicino <> Nil Then Begin
-
-  //TODOTODO: da mettere apposto
- //   If Spostabile(pElementoVicino, Direzione)
-   //   Then Spostamento(pElementoVicino, Direzione)
-    //  Else Cadi(pElementoVicino)
-  //End;
 
   PosizioneElementoSuperiore := pElemento^.Posizione;
   PosizioneElementoSuperiore.Z := PosizioneElementoSuperiore.Z + 1;
@@ -864,8 +569,6 @@ Begin
         Else Caduta(Elementi.Vettore[Indice]);
     End;
 
-    
-
     //Sposta blocchi affiancati (solo se il movimento è orizzontale)
     If (Direzione >= 0) And ((Elementi.Vettore[Indice]^.Tipo = BloccoMobile) Or (Elementi.Vettore[Indice]^.Tipo = BloccoPuzzle)) And PosizioniUguali(Elementi.Vettore[Indice]^.Posizione, Destinazione) Then Begin
       //EsecuzioneEvento(Elementi.Vettore[Indice], pElemento, pElemento^.Animazione.Direzione);
@@ -873,53 +576,28 @@ Begin
     End;
   End;
 
-  //pElemento^.Destinazione := Destinazione;
   PreparazioneAnimazione(pElemento, Direzione);
 End;
 
 Procedure PreparazioneAnimazione;
 Begin
-  // BUGBUG qui vengono effettuate delle sottrazioni, ma Animazione deve sempre contenere -1, 0 o 1
   pElemento^.Animazione.InEsecuzione := True;
 
   pElemento^.Animazione.Destinazione := CoordinateElementoVicino(pElemento, Direzione);
   pElemento^.Animazione.Direzione := Direzione;
 
- // pElemento^.Animazione.pDestinazione := pDestinazione;
-
   pElemento^.Animazione.X := Trunc(pElemento^.Animazione.Destinazione.X - pElemento^.Posizione.X);
   pElemento^.Animazione.Y := Trunc(pElemento^.Animazione.Destinazione.Y - pElemento^.Posizione.Y);
   pElemento^.Animazione.Z := Trunc(pElemento^.Animazione.Destinazione.Z - pElemento^.Posizione.Z);
   pElemento^.Animazione.Progresso := 0;
-  //Occupato := True;
 End;
 
 
-//FIXED: Nome procedura poco rigoroso: la caduta può anche non verificarsi
 Procedure Caduta;
 Var
-  //pElementoSottostante        : TpElemento;
   Destinazione                : TPosizione3d;
 Begin
-  //Destinazione := pElemento^.Posizione;
-  //Destinazione.Z := Destinazione.Z - 1;
-
-  //If Not Spostabile(pElemento, Blocco, -1) Then Exit;   //DIRTY: gli effetti sono gli stessi, ma viene usato sempre Blocco anche quando cade il robot
-
   Spostamento(pElemento, -1);
-
-  //If Not EntroILimitiDellaScacchiera(Destinazione) Then Begin
-  //  Exit;
-  //End;
-
-  //pElemento^.Posizione := Destinazione;
-  //PreparazioneAnimazione(pElemento);
-
-  //pElementoSottostante := ElementoInPosizione(Destinazione);
-  //If (pElementoSottostante <> Nil) And (pElementoSottostante^.Tipo = Robot) And (pElementoSottostante^.Attivato = Robot) Begin
-
-    //Cadi(pElemento);
-  //End;
 End;
 
 
@@ -938,9 +616,6 @@ Begin
     pElemento^.PosizioneFisica := pElemento^.Animazione.Destinazione;
     pElemento^.Posizione := pElemento^.Animazione.Destinazione;
 
-    //If pElemento^.Animazione.pDestinazione <> Nil Then
-    //  EsecuzioneEvento(pElemento^.Animazione.pDestinazione, pElemento, pElemento^.Animazione.Direzione);
-    //End;
     pElemento^.Animazione.InEsecuzione := False;
     ElementoSottostante := CoordinateElementoVicino(pElemento, -1);
     For Indice := 1 To Elementi.Dimensione Do Begin
@@ -948,10 +623,6 @@ Begin
         EsecuzioneEvento(Elementi.Vettore[Indice], pElemento, pElemento^.Animazione.Direzione);
       End;
       //la chiamata sopra funziona per tutte le direzioni
-      
-    //  If PosizioniUguali(Elementi.Vettore[Indice]^.Posizione, ElementoSottostante) Then Begin
-    //    EsecuzioneEvento(Elementi.Vettore[Indice], pElemento, -1);
-    //  End;
     End;
 
     If (Instabile(pElemento)) Then Caduta(pElemento);
@@ -962,47 +633,19 @@ Begin
     //  End;
     //End;
 
-
-
-
-
- //   If ((pElemento^.Tipo <> Robot) And ( pRobot^.Posizione.X = pElemento^.Posizione.X) And
- //   ( pRobot^.Posizione.Y = pElemento^.Posizione.Y) And
- //   ( pRobot^.Posizione.Z = pElemento^.Posizione.Z)) Then
-    //TODOTODO fine partita per schiacciamento robot
-
-    
-   //   pRobot^.Posizione.X := pRobot^.Posizione.X/0;
-    // BUGBUG non è detto
-    //Occupato := False;
   End;
 End;
 
 
-
-
-
-
-
 Function Instabile;
-Var    
+Var
   Destinazione         : TPosizione3d;
   pElementoSottostante : TpElemento;
 Begin
   //BUGBUG: anche il blocco fisso può ora cadere, visto che cade sempre se viene spostata la sua base mentre lui non può muoversi orizzontalmente
-  //DIRTY: questo controllo dovrebbe già venire effettuato dentro la Spostabile()
-  If (pElemento^.Posizione.Z = 1) {Or (pElemento^.Tipo = BloccoFisso)} Then Begin
-    Instabile := False;
-    Exit;
-  End;
+
   //DIRTY: l'effetto non cambia, ma viene sempre mandato Blocco alla fnzione spostabile
   Instabile := Spostabile(pElemento, Blocco, -1);
-  //Destinazione := pElemento^.Posizione;
-  //Destinazione.Z := Destinazione.Z - 1;
-  //pElementoSottostante := ElementoInPosizione(Posizione);
-  //If (pElementoSottostante = Nil) Or (pElementoSottostante^.Tipo = Robot) Or ((pElementoSottostante^.Tipo = Ascensore) And (pElementoSottostante^.Attivato = False))
-  //  Then Instabile := True
-  //  Else Instabile := False;
 End;
 
 
@@ -1022,69 +665,10 @@ Begin
       //  Caduta(Elementi.Vettore[Indice]);
 
     End;
-    
+
   End;
 End;
 
-{
-//BUGBUG: questa proc viene chiamata inutilmente due volte per muovere un oggetto: la prima volta per controllare che si possa, la seconda per ottenere il vettore degli elementi che si trovano in quel punto.
-Procedure ControlloPosizioneRaggiungibile;
-Var
-  Indice                  : Integer;
-  IndiceElementiPresenti  : Integer;
-  pElemento               : TpElemento;
-  ControlloTerminato      : Boolean;
-  Dummy   : TVettorepElementi;
-  PosizioneVicinaRaggiungibile : Boolean;
-Begin
-
-  If Not EntroILimitiDellaScacchiera(Posizione) Then Begin
-    Raggiungibile := False;
-    Exit;
-  End;
-
-  Raggiungibile := True;
-  ControlloTerminato := False;
-  Indice := 0;
-  IndiceElementiPresenti := 0;
-
-  Repeat
-    Indice := Indice + 1;
-    pElemento := Elementi.Vettore[Indice];
-    If (
-         (pElemento^.Posizione.X = Posizione.X) And
-         (pElemento^.Posizione.Y = Posizione.Y) And
-         (pElemento^.Posizione.Z = Posizione.Z)
-       ) Then Begin
-           If ElementoAttraversabile(pElemento, EntitaDiAttraversamento, DallAlto) Then Begin
-             IndiceElementiPresenti := IndiceElementiPresenti + 1;
-             ElementiPresenti.Vettore[IndiceElementiPresenti] := pElemento;
-           End Else Begin
-             Raggiungibile := False;
-             ControlloTerminato := True;
-           End;
-           //DIRTY: istruzione sporca
-           ControlloPosizioneRaggiungibile(CoordinateElementoVicino(pElemento, Direzione), Blocco, DallAlto, PosizioneVicinaRaggiungibile, Dummy, Direzione);
-           If Not PosizioneVicinaRaggiungibile Then Begin
-             Raggiungibile := False;
-             ControlloTerminato := True;
-           End;
-         End Else Begin
-           If Indice = Elementi.Dimensione Then Begin
-             ControlloTerminato := True;
-           End;
-         End;
-  Until ControlloTerminato;
-
-
-
-  If Raggiungibile Then Begin
-     ElementiPresenti.Dimensione := IndiceElementiPresenti;
-  End;
-
-
-End;  }
-        
 
 Function ElementoAttraversabile;
 Var
@@ -1111,7 +695,6 @@ Begin
     // Qualsiasi direzione
     If (Tipo = BloccoGhiaccio) Then Exit;
     If (Tipo = BloccoGhiaccio) Then Exit;
-    If (Tipo = Ascensore) And (pElemento^.Attivato) Then Exit;
 
     If Direzione < 0 Then Begin // Blocco/Robot Da sopra (o dal basso)
       //If (Tipo = BloccoPuzzle) Then Exit;
@@ -1152,15 +735,9 @@ Begin
 
   If Direzione < 0 Then Begin
     If (Tipo = Ascensore) Then
-       //   Spostamento(pSorgente, Direzione);
       CambioStatoAscensore(pElemento, pSorgente, False);
   End Else Begin
-    // Già gestito all'inizio dell'animazione nella procedura Spostamento
-    //If (Tipo = BloccoMobile) Or (Tipo = BloccoPuzzle) Then
-    //DirezioneRelativaElementi(pSorgente^.Posizione, pElemento^.Posizione)
-      //Spostamento(pElemento, Direzione);
     If (Tipo = Ascensore) Then
-    //      Spostamento(pSorgente, Direzione);
       CambioStatoAscensore(pElemento, pSorgente, True);
   End;
 
@@ -1221,19 +798,6 @@ Begin
 End;
 
 
-
-{Procedure EsecuzioneLogicaEventi;
-Var
-  Indice  : Integer;
-Begin
-
-  //BUGBUG: attenzione quando si distrugge un oggetto, il ciclo potrebbe corrompersi
-  For Indice := 1 To Elementi.Dimensione Do Begin
-      //If PosizioniUguali(Elementi.Vettore[Indice]^.Posizione, pElemento^.Posizione) Then
-      //EsecuzioneEvento(Elementi.Vettore[Indice], pElemento, False);
-  End;
-
-End;  }
 
 Function PosizioniUguali;
 Begin
