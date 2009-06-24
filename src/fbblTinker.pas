@@ -11,11 +11,11 @@ unit fbblTinker;
 // BUGBUG: Sembra che correndo il robot possa non cadere
 // BUGBUG: Se il robot spinge un blocco verso un nastro che punta verso di lui, i due compenetrano
 // BUGBUG: Cadendo su un ascensore abbassato questo non si alza
+// BUGBUG: Non si riesce a portare su un ascensore una pila di oggetti senza che questo si riabbassi appena alzato
 
 
 
-
-Uses Graphics, ExtCtrls, SysUtils, Forms, Classes, Types, Math, StrUtils, TypInfo, Registry;
+Uses Graphics, ExtCtrls, SysUtils, Forms, Classes, Types, Math, StrUtils, TypInfo, Registry, frmEsito;
 
 Type
   TDimensioni2dCubo = Record
@@ -84,6 +84,9 @@ Type
                 Ingranaggio                 : TBitmap;
                 Pila                        : TBitmap;
 
+                EsitoPartitaPositivo                : TBitmap;
+                EsitoPartitaNegativo                : TBitmap;
+
                //TODO Pistola                     : TQuattroBitmapColorizzateOnOff;
 
               End;
@@ -98,6 +101,7 @@ Type
                     Robot=51, Traguardo=52);
 
   TEntitaDiAttraversamento = (Personaggio, Blocco, Laser);
+  TCausaSpostamento = (ComandoPersonaggio, AvvioTeletrasporto, SpintaPersonaggio, SpintaBlocco, Gravita, MovimentoBloccoSottostante, ScorrimentoNastroSottostante);
 
   TScacchiera = Record
                                Direzione              : Integer; // -1 o 1
@@ -194,6 +198,7 @@ Type
             Voci                 : TVettoreVociMenu;
             PrimoElementoDaDisegnare   : Integer;
             UltimoElementoDaDisegnare  : Integer;
+            UltimoLivelloCaricato : String;
           End;
 
 
@@ -208,8 +213,8 @@ Const
 
   AltezzaMassima : Integer = 6;
 
-  CartellaLivelli : String = '.\Livelli\';
-  ChiaveLivelliSuperati : String = '\Software\Tinker\Livelli';
+  CartellaLivelli : String = '.\Levels\';
+  ChiaveLivelliSuperati : String = '\Software\Tinker\Levels';
 
   Colorizzazioni : TArrayColorizzazioni = (
      ($2684FF, $006AFF, $005FDF, $0057CE), //Arancio  //Dal più chiaro al più scuro
@@ -241,6 +246,9 @@ Var
   RisoluzioneOriginaleW : Integer = 0;
   LivelliSuperati : TRegistry;
   //CadutaRobot           : Integer;
+  Energia               : Integer;
+  IngranaggiTrovati     : Integer;
+  IngranaggiTotali      : Integer;
 
 
 
@@ -293,6 +301,8 @@ Function EntroILimitiDellaScacchiera(Const Posizione : TPosizione3d) : Boolean;
 Procedure Spostamento(Var pElemento : TpElemento; Const Direzione : Integer; Const Destinazione : TPosizione3d);
 //Procedure SpostamentoGenerico(Var pElemento : TpElemento; Const Direzione : Integer; Const Destinazione : TPosizione3d);
 
+Procedure SpostamentoElementoSuperiore(Const PosizioneBase : TPosizione3d; Var pElementoSuperiore : TpElemento; Const Direzione : Integer);
+
 Procedure PreparazioneMovimento(Var pElemento : TpElemento; { Var pDestinazione : TpElemento;} Const Direzione : Integer; Const Destinazione : TPosizione3d);
 
 //Procedure Caduta(Var pElemento : TpElemento);
@@ -311,7 +321,7 @@ Function ElementoAttraversabile(Const pElemento : TpElemento; Const EntitaDiAttr
 Function DirezioneRelativaElementi(Const Posizione1 : TPosizione3d; Const Posizione2 : TPosizione3d) : Integer;
 
 
-Function Spostabile(Const pElemento : TpElemento; Const ElementoAttraversante : TEntitaDiAttraversamento; Const Direzione : Integer) : Boolean;
+Function Spostabile(Const pElemento : TpElemento; Const CausaSpostamento : TCausaSpostamento; Const Direzione : Integer) : Boolean;
 
 Function PosizioniUguali(Const Posizione1 : TPosizione3d; Const Posizione2 : TPosizione3d) : Boolean;
 Procedure CambioStatoAscensore(Var pAscensore : TpElemento; Const Attivato : Boolean);
@@ -330,6 +340,7 @@ Function ElementoInPosizione(Const Posizione : TPosizione3d; Const Pavimentazion
 
 Procedure AzionamentoTeletrasporto(Var pTeletrasporto : TpElemento);
 
+Procedure MostraEsitoPartita(Const Testo : String; Const Vinto : Boolean);
 Procedure MessaggioErrore(Const Testo : PAnsiChar);
 
 Function TeletrasportoCorrispondente(Const pRiferimento : TpElemento) : TpElemento;
@@ -365,10 +376,16 @@ Procedure DimensionamentoAree(Const Larghezza : Integer; Const Altezza : Integer
 
 Procedure RaggiungimentoTraguardo();
 
+Function CambiaCaricaBatteria(Const Incremento : Integer) : Boolean;
+
+
+//Procedure AggiornamentoStatoInterruttore(Var pInterruttore : TpElemento);
+
+
 //==============================================================================
   Implementation
 
-uses ConvUtils;
+uses ConvUtils, ffrmTinker;
 //==============================================================================
 
 {Procedure InizializzazioneGioco;
@@ -494,6 +511,10 @@ Begin
   CaricamentoImmagine(Immagini.Pila, 'Pila');
 
 
+  
+  CaricamentoImmagine(Immagini.EsitoPartitaPositivo, 'EsitoPartitaPositivo');
+  CaricamentoImmagine(Immagini.EsitoPartitaNegativo, 'EsitoPartitaNegativo');
+
     {
 
 
@@ -617,7 +638,13 @@ begin
 
     
 
-
+  If(Energia>0) then begin
+    Bitmap.Canvas.Font.Color := clYellow;
+    Bitmap.Canvas.Font.Name := 'Verdana';
+    Bitmap.Canvas.Font.Size := 20;
+    Bitmap.Canvas.Brush.Style := bsClear;
+    Bitmap.Canvas.TextOut(bitmap.Width-100, 50, IntToStr(Energia));
+  end;
 
 
   If MenuDiGioco.Menu <> Chiuso Then Begin
@@ -901,7 +928,12 @@ End;
 Procedure AvanzaRobot;
 Begin
   // BUGBUG: spostabile va fatto ora o quando viene elaborata la coda?
-  If Not Spostabile(pRobot, Personaggio, pRobot^.Orientamento) Then Exit;
+
+
+  If Not Spostabile(pRobot, ComandoPersonaggio, pRobot^.Orientamento) Then Exit;
+
+  if(CambiaCaricaBatteria(-1)=False) then exit;
+
   Accodamento(pRobot, pRobot^.Orientamento);
   //Accodamento(pRobot, pRobot^.Orientamento);
  // Spostamento(pRobot, pRobot^.Orientamento);
@@ -920,7 +952,8 @@ Begin
   If Direzione = 3 Then PosizioneVicina.Y := Posizione.Y - 1;
   If Direzione = -1 Then PosizioneVicina.Z := Posizione.Z - 1; //GIU
   If Direzione = -2 Then PosizioneVicina.Z := Posizione.Z + 1; //SU
-  If Direzione = -3 Then MessaggioErrore('CoordinateElementoVicino ha ricevuto una direzione pari a -3');
+  If Direzione = -3 Then
+  MessaggioErrore('CoordinateElementoVicino ha ricevuto una direzione pari a -3');
   CoordinateElementoVicino := PosizioneVicina;
 End;
 
@@ -954,7 +987,7 @@ Begin
     If Elementi.Vettore[Indice1] = Nil Then Continue;
     PosMinimo := Indice1;
     For Indice2 := Indice1 To Elementi.Dimensione Do Begin
-      If Elementi.Vettore[Indice2]<>Nil And (  Elementi.Vettore[Indice2]^.PrioritaDiDisegno < Elementi.Vettore[PosMinimo]^.PrioritaDiDisegno) Then
+      If (Elementi.Vettore[Indice2] <> Nil) And (Elementi.Vettore[Indice2]^.PrioritaDiDisegno < Elementi.Vettore[PosMinimo]^.PrioritaDiDisegno) Then
         PosMinimo := Indice2;
     End;
     If PosMinimo > Indice1 Then
@@ -1031,22 +1064,32 @@ Begin
 
   PosizioneElementoVicino := pElemento^.Posizione;
   PosizioneElementoVicino.Z := PosizioneElementoVicino.Z + 1;
-  pElementoVicino := ElementoInPosizione(PosizioneElementoVicino, False);
 
-  // Sposta anche l'elemento superiore, se non è spostabile fallo cadere
-  If (pElementoVicino <> Nil) Then Begin
-    DestinazioneElementoSuperiore := Destinazione;
-    DestinazioneElementoSuperiore.Z := DestinazioneElementoSuperiore.Z + 1;
-    If Spostabile(pElementoVicino, Blocco, Direzione)
-      Then AccodamentoGenerico(pElementoVicino, Direzione, DestinazioneElementoSuperiore)
-   //     If Direzione = -3
+
+  pElementoVicino := ElementoInPosizione(PosizioneElementoVicino, False);
+  If (pElementoVicino <> Nil)
+    Then SpostamentoElementoSuperiore(Destinazione, pElementoVicino, Direzione);
+
+  pElementoVicino := ElementoInPosizione(PosizioneElementoVicino, True);
+  If (pElementoVicino <> Nil)
+    Then SpostamentoElementoSuperiore(Destinazione, pElementoVicino, Direzione);
+
+
+    //TODO qui stavo facendo qualcosa ma non mi ricordo cosa
+  {If pElemento^.Tipo = InterruttorePavimento Then Begin
+  pElementoVicino := ElementoInPosizione(pElemento^.Posizione, False);
+  If (pElementoVicino <> Nil) And (pElementoVicino^.Tipo = Blocco)
+
+  End;
+  }
+
+
+
+     //     If Direzione = -3
     //      Then Begin
     //        AccodamentoGenerico(pElementoVicino, Direzione, Destinazione)
     //      End;
     //      Else Accodamento(pElementoVicino, Direzione)
-      Else Accodamento(pElementoVicino, -1);    // BUGBUG: caduta, non semplice spostamento
-  End;
-
 
   pElementoVicino := ElementoInPosizione(pElemento^.Movimento.Destinazione, False);
 
@@ -1063,6 +1106,23 @@ Begin
 
 
 End;
+
+
+
+Procedure SpostamentoElementoSuperiore;
+Var
+  DestinazioneElementoSuperiore : TPosizione3d;
+ // ProssimaCausaSpostamento      : TCausaSpostamento;
+Begin
+
+  DestinazioneElementoSuperiore := PosizioneBase;
+  DestinazioneElementoSuperiore.Z := DestinazioneElementoSuperiore.Z + 1;
+  If Spostabile(pElementoSuperiore, MovimentoBloccoSottostante, Direzione)
+      Then AccodamentoGenerico(pElementoSuperiore, Direzione, DestinazioneElementoSuperiore)
+      Else Accodamento(pElementoSuperiore, -1);    // BUGBUG: caduta, non semplice spostamento
+End;
+
+
 
 Procedure PreparazioneMovimento;
 Begin
@@ -1136,8 +1196,8 @@ Function Instabile;
 Begin
   //BUGBUG: anche il blocco fisso può ora cadere, visto che cade sempre se viene spostata la sua base mentre lui non può muoversi orizzontalmente
 
-  //DIRTY: l'effetto non cambia, ma viene sempre mandato Blocco alla fnzione spostabile
-  Instabile := Spostabile(pElemento, Blocco, -1);
+  //FIXED DIR-TY: l'effetto non cambia, ma viene sempre mandato Blocco alla fnzione spostabile
+  Instabile := Spostabile(pElemento, Gravita, -1);
 End;
 
 
@@ -1172,9 +1232,10 @@ Begin
   For Indice := 1 To Elementi.Dimensione Do Begin
     pElemento := Elementi.Vettore[Indice];
     if pElemento = Nil Then continue;
-    //DIRTY: viene sempre usato blocco  (anche se il risultato non cambia)
+    //FIXED DIR-TY: viene sempre usato blocco  (anche se il risultato non cambia)
+    //DIRTY: bisognerebbe testare l'instabilità di un elemento solo quando serve
     If Not pElemento^.Movimento.InEsecuzione Then Begin
-      If Spostabile(pElemento, Blocco, -1) Then //Begin
+      If Spostabile(pElemento, Gravita, -1) Then //Begin
         Accodamento(pElemento, -1);
 
     //  End Else Begin
@@ -1288,39 +1349,106 @@ Var
 //  ControlloTerminato : Boolean;
 //  Indice             : Integer;
   pElementoVicino    : TpElemento;
+  ProssimaEntitaDiAttraversamento : TEntitaDiAttraversamento;
+  ProssimaCausaSpostamento        : TCausaSpostamento;
+  TeoricamenteSpostabile          : Boolean;
 Begin
-  // forse BUGBUG: il robot non deve poter essere mosso da un blocco
-  If (pElemento^.Tipo <> Robot) And (pElemento^.Tipo <> BloccoMobile) And (pElemento^.Tipo <> BloccoPuzzle) And (Direzione <> -1) Then Begin
+  // FIXED: il robot non deve poter essere mosso da un blocco
+
+  If (CausaSpostamento = Gravita) And (pElemento.Posizione.Z = 1) Then Begin
     Spostabile := False;
     Exit;
   End;
 
+  If CausaSpostamento <> Gravita Then Begin
+      pElemento^.Tipo := pElemento^.Tipo;
+   End;
+
+
   // Con il teletrasporto si può sempre spostare qualcosa
-  If Direzione = -3 Then Begin
+  If CausaSpostamento = AvvioTeletrasporto Then Begin
+    Spostabile := True;
+    Exit;
+  End;
+
+  //DIRTY: se ci arriva per teletrasporto, immagina che si possa sempre
+  If (Direzione <> -3) Then Begin
+    Destinazione := CoordinateElementoVicino(pElemento^.Posizione, Direzione);
+    If Not EntroILimitiDellaScacchiera(Destinazione) Then Begin
+      Spostabile := False;
+      Exit;
+    End;
+  End;
+
+  // FIXED: il robot non deve poter essere mosso da un blocco
+  // DIRTY: forse queste istruzioni non servono più
+  If (pElemento^.Tipo = Robot) And (CausaSpostamento = SpintaBlocco) Then Begin
+    Spostabile := False;
+    Exit;
+  End;
+
+
+
+
+  TeoricamenteSpostabile := False;
+
+  If (CausaSpostamento = MovimentoBloccoSottostante) Or (CausaSpostamento = Gravita)
+    Then TeoricamenteSpostabile := True;
+
+  If (pElemento^.Tipo = BloccoMobile) Or (pElemento^.Tipo = BloccoPuzzle)
+    Then TeoricamenteSpostabile := True;
+
+  If (pElemento^.Tipo = Robot) And ((CausaSpostamento = ComandoPersonaggio) Or (CausaSpostamento = ScorrimentoNastroSottostante))
+    Then TeoricamenteSpostabile := True;
+
+  If Not TeoricamenteSpostabile Then Begin
+    Spostabile := False;
+    Exit;
+  End;
+
+
+
+
+  //GENERICI
+
+  // O non c'è ~gnente~
+
+  pElementoVicino := ElementoInPosizione(Destinazione, False);
+  If (pElementoVicino = Nil) Then Begin
+    Spostabile := True;
+    Exit;
+  End;
+
+  // O è attraversabile
+  If pElemento^.Tipo = Robot
+    Then ProssimaEntitaDiAttraversamento := Personaggio
+    Else ProssimaEntitaDiAttraversamento := Blocco;
+  If ElementoAttraversabile(pElementoVicino, ProssimaEntitaDiAttraversamento, Direzione) Then Begin
     Spostabile := True;
     Exit;
   End;
 
 
-
-  Destinazione := CoordinateElementoVicino(pElemento^.Posizione, Direzione);
-  If Not EntroILimitiDellaScacchiera(Destinazione) Then Begin
-    Spostabile := False;
-    Exit;
-  End;
+  // O Spostabile
+                              // BUGBUG; specificare, non è sempre SpintaBlocco
 
 
-  //BUGBUG: qui viene sempre usato blocco come entità di attraversamento, ma è sbagliato e gli effetti sono diversi
 
-  pElementoVicino := ElementoInPosizione(Destinazione, False);
-  If ((pElementoVicino = Nil) Or ElementoAttraversabile(pElementoVicino, Blocco, Direzione) Or Spostabile(pElementoVicino, Blocco, Direzione))
-    Then Spostabile := True
-    Else Spostabile := False;
-    
-    
+    If Spostabile(pElementoVicino, SpintaBlocco, Direzione) Then Begin
+      Spostabile := True;
+      Exit;
+    End;
+
+
+
+  Spostabile := False;
+ // Spostabile := True;
+  Exit;
+
   //Si può sempre spostare qualcosa sopra alle pavimentazioni
 
 
+  //BUGBUG: qui viene sempre usato blocco come entità di attraversamento, ma è sbagliato e gli effetti sono diversi
 
 
 End;
@@ -1377,7 +1505,8 @@ Procedure Accodamento;
 Var
   Destinazione   : TPosizione3d;
 Begin
-  If Direzione = -3 Then MessaggioErrore('Accodamento: è stato richiesto lo spostamento di un elemento in direzione -3 senza specificarne la destinazione.');
+  If Direzione = -3 Then
+  MessaggioErrore('Accodamento: è stato richiesto lo spostamento di un elemento in direzione -3 senza specificarne la destinazione.');
   Destinazione := CoordinateElementoVicino(pElemento^.Posizione, Direzione);
   AccodamentoGenerico(pElemento, Direzione, Destinazione);
 //  Spostamento(pElemento, Direzione);
@@ -1430,7 +1559,7 @@ Begin
   If (pElementoVicino <> Nil) Then Begin
     If (pElementoVicino^.Tipo = Ascensore) And Not pElementoVicino^.Attivato And (Direzione <> -1)
       Then CambioStatoAscensore(pElementoVicino, True);
-    If (pElementoVicino^.Tipo = Nastro) And pElementoVicino^.Attivato And Spostabile(pElemento, Blocco, pElementoVicino^.Orientamento) //DIRTY anche qua per blocco
+    If (pElementoVicino^.Tipo = Nastro) And pElementoVicino^.Attivato And Spostabile(pElemento, ScorrimentoNastroSottostante, pElementoVicino^.Orientamento) //DIRTY anche qua per blocco
       Then Accodamento(pElemento, pElementoVicino^.Orientamento);
     If (pElementoVicino^.Tipo = Teletrasporto) And (pElemento^.Movimento.Direzione <> -3)
       Then AzionamentoTeletrasporto(pElementoVicino);
@@ -1438,20 +1567,34 @@ Begin
       Then RaggiungimentoTraguardo();
     If (pElementoVicino^.Tipo = InterruttorePuzzle) And (pElemento^.Tipo = BloccoPuzzle) And (pElemento^.Colore = pElementoVicino^.Colore)
       Then CambioStatoInterruttore(pElementoVicino, True);  // BUGBUG: non viene mai riportato a false
+    If (pElementoVicino^.Tipo = Pila) And (pElemento^.Tipo = Robot) Then Begin
+      pElementoVicino.Posizione.Z := 100;
+      pElementoVicino.PosizioneFisica.Z := 100;
+      CambiaCaricaBatteria(+10);
+    End;
+    If (pElementoVicino^.Tipo = Ingranaggio) And (pElemento^.Tipo = Robot) Then Begin
+      pElementoVicino.Posizione.Z := 100;     
+      pElementoVicino.PosizioneFisica.Z := 100;
+      IngranaggiTrovati := IngranaggiTrovati + 1;
+    End;
   End;
+
+
+
+
 
 
   pElementoVicino := ElementoInPosizione(pElemento^.Posizione, False);
   If (pElementoVicino <> Nil) Then Begin
     If (pElementoVicino^.Tipo = Robot) And (pElemento^.Tipo <> Robot) And (pElemento^.Movimento.Direzione = -1)
-      Then MessaggioErrore('morto per schiacciamento');
+      Then MostraEsitoPartita('Robot schiacciato!', False);
   End;
 
   If Instabile(pElemento) Then Begin
     pElemento^.Movimento.DistanzaCaduta := pElemento^.Movimento.DistanzaCaduta + 1;
   End Else Begin
     If (pElemento = pRobot) And (pElemento^.Movimento.DistanzaCaduta > 2)
-      Then MessaggioErrore('morto per caduta dall''alto.');
+      Then MostraEsitoPartita('Il robot è caduto da un'' altezza troppo elevata', False);
     pElemento^.Movimento.DistanzaCaduta := 0;
        // Else CadutaRobot := 0;
   End;
@@ -1530,6 +1673,8 @@ Begin
   If Tipo = Nastro Then Exit;
   If Tipo = Teletrasporto Then Exit;
   If Tipo = Traguardo Then Exit;
+  If Tipo = Pila Then Exit;
+  If Tipo = Ingranaggio Then Exit;
 
   ElementoDiPavimentazione := False;
 
@@ -1607,9 +1752,27 @@ Begin
 End;
 
 
+Procedure MostraEsitoPartita;
+Begin
+  frmEsitoPartita := TfrmEsitoPartita.Create(frmTinker);
+  frmEsitoPartita.Caption := Testo;
+  frmEsitoPartita.Vinto := Vinto;
+  frmEsitoPartita.ShowModal();
+
+  //if(Vinto=False) Then begin
+  Energia := -1;
+  Livello := '';
+  AperturaMenu(Caricamento);
+  //end;
+  
+
+End;
+
+
 Procedure MessaggioErrore;
 Begin
-  Application.MessageBox(Testo, 'Tinker', 0);
+   MostraEsitoPartita(Testo, False) ;
+//  Application.MessageBox(Testo, 'Tinker', 0);
 End;
 
 Function TeletrasportoCorrispondente;
@@ -1741,9 +1904,11 @@ Var
   //TipoLivello : TTipoLivello;
 //  IdentificatoreLivello : String;
 Begin
+  //If (MenuDiGioco.Menu <> Caricamento) Then
+  MenuDiGioco.ElementoSelezionato := 1;
   MenuDiGioco.Menu := Menu;
   MenuDiGioco.Voci.Dimensione := 0;
-  MenuDiGioco.ElementoSelezionato := 1;
+
   MenuDiGioco.PrimoElementoDaDisegnare := 1;
   If Menu = Principale Then Begin     
     If Livello <> '' Then AggiuntaVoceMenu('Riavvia livello', 'RESTART', Sistema);
@@ -1762,7 +1927,10 @@ Begin
           AggiuntaVoceMenu(Rec.Name, MenuDiGioco.Cartella+'\'+Rec.Name, Cartella);
         End Else Begin
           If ExtractFileExt(Rec.Name) = '.tnk'
-            Then AggiuntaVoceMenu(NomeDescrittivoLivello(Rec.Name), MenuDiGioco.Cartella+'\'+Rec.Name, StatoLivello(Rec.Name))
+            Then Begin
+              AggiuntaVoceMenu(NomeDescrittivoLivello(Rec.Name), MenuDiGioco.Cartella+'\'+Rec.Name, StatoLivello(Rec.Name));
+              If IdentificatoreLivelloDaNomeFile(Rec.Name) = MenuDiGioco.UltimoLivelloCaricato Then MenuDiGioco.ElementoSelezionato := MenuDiGioco.Voci.Dimensione;
+            End;
         End;
       Until FindNext(Rec) <> 0;
       FindClose(Rec) ;
@@ -1810,12 +1978,12 @@ Var
 Begin
   pInterruttore.Attivato := Attivato;
   For Indice := 1 To Elementi.Dimensione Do Begin
-    If Elemento.Vettore[Indice] = Nil Then Continue;
+    If Elementi.Vettore[Indice] = Nil Then Continue;
     If pInterruttore.Colore = Elementi.Vettore[Indice]^.Colore Then Begin
       Case Elementi.Vettore[Indice]^.Tipo Of
         Nastro : Elementi.Vettore[Indice]^.Attivato := Attivato; //BUGBUG: porta via in una funzione separata e sposta oggetto sopra il teletrasporto se viene attivato
        //TODO  Bomba :  If Attivato Then EsplosioneBomba(Elementi.Vettore[Indice])
-        Porta : Elementi.Vettore[Indice]^.Attivato := Attivato;
+        Porta : Elementi.Vettore[Indice]^.Attivato := Not Elementi.Vettore[Indice]^.Attivato;
         Calamita : Elementi.Vettore[Indice]^.Attivato := Attivato;
        //TODO Specchio : si dovrebbe girare?
         Pistola : Elementi.Vettore[Indice]^.Attivato := Attivato;
@@ -1981,6 +2149,7 @@ Begin
 end;
 
 
+
 Procedure CaricamentoLivello;
 var
   FileLivello         : TextFile;
@@ -1995,6 +2164,10 @@ Begin
   CodaOperazioni.pFine := Nil;
   Elementi.Dimensione := 0;
   pRobot := Nil;
+  IngranaggiTrovati := 0;
+  IngranaggiTotali := 0;
+
+  MenuDiGioco.UltimoLivelloCaricato := IdentificatoreLivelloDaNomeFile(Percorso);
 
   Parametri := TStringList.Create;
   Parametri.Delimiter := ' ';
@@ -2011,8 +2184,13 @@ Begin
      //Indice:=
       //DIRTY: riga lunghissima piena di strtoint
       If StrToInt(Parametri[0]) = 0
-        Then InizializzazioneScacchiera(StrToInt(Parametri[1]))
-        Else AggiuntaElemento(IntToTipoElemento(StrToInt(Parametri[0])), StrToInt(Parametri[1]),StrToInt(Parametri[2]),StrToInt(Parametri[3]), StrToInt(Parametri[4]), Parametri[5]='1', StrToInt(Parametri[6]) );
+        Then Begin
+          InizializzazioneScacchiera(StrToInt(Parametri[1]));
+          if(parametri.Count>2)
+            then Energia := StrToInt(Parametri[2])
+            else Energia := -1;
+        End Else AggiuntaElemento(IntToTipoElemento(StrToInt(Parametri[0])), StrToInt(Parametri[1]),StrToInt(Parametri[2]),StrToInt(Parametri[3]), StrToInt(Parametri[4]), Parametri[5]='1', StrToInt(Parametri[6]) );
+        If(IntToTipoElemento(StrToInt(Parametri[0]))=Ingranaggio) Then IngranaggiTotali := IngranaggiTotali + 1;
     Except
      // On EConversionError Do
       MessaggioErrore('dgh');
@@ -2030,7 +2208,7 @@ Begin
   // DIRTY: un ciclo semplicemente per convertire un intero nel corrispondente TTipoElemento
   For Tipo := Low(TTipoElemento) To High(TTipoElemento) Do
     If Ord(Tipo) = Numero Then IntToTipoElemento := Tipo;
-
+  //IntToTipoElemento := TTipoElemento;
 End;
 
 Procedure DimensionamentoScacchiera;
@@ -2126,16 +2304,47 @@ End;
 
 Procedure RaggiungimentoTraguardo;
 Begin
-  MessaggioErrore('Hai vinto!');
+
 
   //DIRTY: due scritture sul registro con codice duplicato
-  If False {Hai preso tutte le ruote dentate} Then Begin
+  If( IngranaggiTrovati = IngranaggiTotali) And (IngranaggiTotali>0) {Hai preso tutte le ruote dentate} Then Begin
     LivelliSuperati.WriteInteger(IdentificatoreLivelloDaNomeFile(Livello), 1);
   End Else Begin
     If StatoLivello(Livello) = LivelloNonSuperato
       Then LivelliSuperati.WriteInteger(IdentificatoreLivelloDaNomeFile(Livello), 0);
   End;
+
+  MostraEsitoPartita('Livello completato.', True);
 End;
+
+   {
+Procedure AggiornamentoStatoInterruttore;
+Var
+  Indice : Integer;
+Begin
+  For Indice := 1 To Elementi.Vettore[Indice] Do Begin
+    If Elementi.Vettore[Indice]
+  End;
+
+end;
+  }
+
+
+Function CambiaCaricaBatteria;
+Begin
+  If(Energia = -1) then begin
+     CambiaCaricaBatteria := True;
+     Exit;
+  end;
+
+  Energia := Energia + Incremento;
+  If(Energia = 0)
+    then CambiaCaricaBatteria := False
+    else CambiaCaricaBatteria := True;
+
+  if (Energia = 0) Then MostraEsitoPartita('Batteria esaurita!', False);
+End;
+
 
 
 end.
