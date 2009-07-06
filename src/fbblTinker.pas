@@ -8,10 +8,10 @@ unit fbblTinker;
 
 
 
-// BUGBUG: Sembra che correndo il robot possa non cadere
-// BUGBUG: Se il robot spinge un blocco verso un nastro che punta verso di lui, i due compenetrano
+// FIXED: Sembra che correndo il robot possa non cadere
+// FIXED: Se il robot spinge un blocco verso un nastro che punta verso di lui, i due compenetrano
 // BUGBUG: Cadendo su un ascensore abbassato questo non si alza
-// BUGBUG: Non si riesce a portare su un ascensore una pila di oggetti senza che questo si riabbassi appena alzato
+// FIXED: Non si riesce a portare su un ascensore una pila di oggetti senza che questo si riabbassi appena alzato
 
 
 
@@ -26,7 +26,7 @@ Type
 
 //TBitmap
   TBitmapOnOff = Array[0..1] Of TBitmap;
-  
+
   TBitmapColorizzate = Array[1..5] Of TBitmap;
   TBitmapColorizzateOnOff = Array[0..1] Of TBitmapColorizzate;
 
@@ -45,7 +45,7 @@ Type
                 ScacchieraCellaBianca     : TBitmap;
                 ScacchieraCellaNera       : TBitmap;
 
-                Bomba                     : TBitmapColorizzate;
+                Bomba                     : TBitmapColorizzateOnOff;
 
                 InterruttorePavimento     : TBitmapOnOff;
                 InterruttorePuzzle        : TBitmapColorizzateOnOff;
@@ -56,7 +56,7 @@ Type
                 Teletrasporto             : TBitmap;
 
                 BloccoPuzzle              : TBitmapColorizzate;
-                BloccoMetallico           : TBitmap;
+                //BloccoMetallico           : TBitmap;
                 BloccoGhiaccio            : TBitmap;
                 BloccoMobile              : TBitmap;
                 BloccoFisso               : TBitmap;
@@ -75,12 +75,12 @@ Type
                 IconaLivelloSuperato          : TBitmap;
                 IconaLivelloNonSuperato       : TBitmap;
 
-                InterruttoreBersaglio                   : TQuattroBitmapColorizzateOnOff;
-                Calamita                    : TQuattroBitmapColorizzateOnOff;
-                Specchio                    : TQuattroBitmap;
+               // InterruttoreBersaglio                   : TQuattroBitmapColorizzateOnOff;
+               // Calamita                    : TQuattroBitmapColorizzateOnOff;
+               // Specchio                    : TQuattroBitmap;
 
                 Porta                       : TQuattroBitmapColorizzateOnOff;
-                Pistola                     : TQuattroBitmapColorizzateOnOff;
+               // Pistola                     : TQuattroBitmapColorizzateOnOff;
                 Ingranaggio                 : TBitmap;
                 Pila                        : TBitmap;
 
@@ -93,15 +93,15 @@ Type
 
 
 
-  TTipoElemento = ( BloccoFisso=01, BloccoMobile=02, BloccoGhiaccio=03, BloccoMetallico=04, BloccoPuzzle=05,
+  TTipoElemento = ( BloccoFisso=01, BloccoMobile=02, BloccoGhiaccio=03, BloccoPuzzle=05,
                     Ascensore=11, Nastro=12, Teletrasporto=13,
-                    InterruttorePavimento=21, InterruttorePuzzle=22, InterruttoreBersaglio=23, InterruttoreLevetta=24,
-                    Bomba=31, Porta=32, Calamita=33, Specchio=34, Pistola=35,
+                    InterruttorePavimento=21, InterruttorePuzzle=22, InterruttoreLevetta=24,
+                    Bomba=31, Porta=32,
                     Pila=41, Ingranaggio=42,
                     Robot=51, Traguardo=52);
 
   TEntitaDiAttraversamento = (Personaggio, Blocco, Laser);
-  TCausaSpostamento = (ComandoPersonaggio, AvvioTeletrasporto, SpintaPersonaggio, SpintaBlocco, Gravita, MovimentoBloccoSottostante, ScorrimentoNastroSottostante);
+  TCausaSpostamento = (ComandoPersonaggio, AvvioTeletrasporto, SpintaPersonaggio, SpintaBlocco, Gravita, MovimentoBloccoSottostante, ScorrimentoNastroSottostante, Esplosione);
 
   TScacchiera = Record
                                Direzione              : Integer; // -1 o 1
@@ -381,6 +381,9 @@ Function CambiaCaricaBatteria(Const Incremento : Integer) : Boolean;
 
 //Procedure AggiornamentoStatoInterruttore(Var pInterruttore : TpElemento);
 
+Procedure EsplosioneBomba(var pBomba : TpElemento);
+
+Procedure EliminazioneElemento(Var pElemento : TpElemento);
 
 //==============================================================================
   Implementation
@@ -465,7 +468,7 @@ Begin
 
 
   CaricamentoImmagine(Immagini.BloccoPuzzle, 'BloccoPuzzle');
-  CaricamentoImmagine(Immagini.BloccoMetallico, 'BloccoMetallico');
+ // CaricamentoImmagine(Immagini.BloccoMetallico, 'BloccoMetallico');
   CaricamentoImmagine(Immagini.BloccoGhiaccio, 'BloccoGhiaccio');
   CaricamentoImmagine(Immagini.BloccoMobile, 'BloccoMobile');
   CaricamentoImmagine(Immagini.BloccoFisso, 'BloccoFisso');
@@ -503,9 +506,9 @@ Begin
   CaricamentoImmagine(Immagini.IconaLivelloCompletato, 'IconaLivelloCompletato');
 
 
-  CaricamentoImmagine(Immagini.InterruttoreBersaglio, 'InterruttoreBersaglio');
-  CaricamentoImmagine(Immagini.Calamita, 'Calamita');
-  CaricamentoImmagine(Immagini.Specchio, 'Specchio');
+ // CaricamentoImmagine(Immagini.InterruttoreBersaglio, 'InterruttoreBersaglio');
+  //CaricamentoImmagine(Immagini.Calamita, 'Calamita');
+  //CaricamentoImmagine(Immagini.Specchio, 'Specchio');
   CaricamentoImmagine(Immagini.Porta, 'Porta');
   CaricamentoImmagine(Immagini.Ingranaggio, 'Ingranaggio');
   CaricamentoImmagine(Immagini.Pila, 'Pila');
@@ -558,7 +561,7 @@ Var
 Begin
 
   Bitmap := TBitmap.Create;
-  Bitmap.LoadFromFile('Images\'+BaseNome+'.bmp');  //DIRTY: percorso duplicato
+  Bitmap.LoadFromFile('Images\'+BaseNome+'.bmp');  //HACK: percorso duplicato
 
   For Indice := 1 To 5 Do Begin
     BitmapColorizzate[Indice] := TBitmap.Create;
@@ -770,7 +773,7 @@ Begin
   Orientamento := pElemento^.Orientamento;
 
   Case pElemento^.Tipo Of
-    Bomba : ImmagineDaDisegnare := Immagini.Bomba[Colore];
+    Bomba : ImmagineDaDisegnare := Immagini.Bomba[Stato][Colore];
 
     InterruttorePavimento : ImmagineDaDisegnare := Immagini.InterruttorePavimento[Stato];
     InterruttorePuzzle : ImmagineDaDisegnare := Immagini.InterruttorePuzzle[Stato][Colore];
@@ -781,7 +784,7 @@ Begin
     Teletrasporto : ImmagineDaDisegnare := Immagini.Teletrasporto;
 
     BloccoPuzzle : ImmagineDaDisegnare := Immagini.BloccoPuzzle[Colore];
-    BloccoMetallico : ImmagineDaDisegnare := Immagini.BloccoMetallico;
+   // BloccoMetallico : ImmagineDaDisegnare := Immagini.BloccoMetallico;
     BloccoGhiaccio : ImmagineDaDisegnare := Immagini.BloccoGhiaccio;
     BloccoMobile : ImmagineDaDisegnare := Immagini.BloccoMobile;
     BloccoFisso : ImmagineDaDisegnare := Immagini.BloccoFisso;
@@ -792,9 +795,9 @@ Begin
 
     Porta : ImmagineDaDisegnare := Immagini.Porta[Orientamento][Stato][Colore];
 
-    InterruttoreBersaglio : ImmagineDaDisegnare := Immagini.InterruttoreBersaglio[Orientamento][Stato][Colore];
-    Pistola : ImmagineDaDisegnare := Immagini.Pistola[Orientamento][Stato][Colore];
-    Calamita : ImmagineDaDisegnare := Immagini.Calamita[Orientamento][Stato][Colore];
+   // InterruttoreBersaglio : ImmagineDaDisegnare := Immagini.InterruttoreBersaglio[Orientamento][Stato][Colore];
+   // Pistola : ImmagineDaDisegnare := Immagini.Pistola[Orientamento][Stato][Colore];
+    //Calamita : ImmagineDaDisegnare := Immagini.Calamita[Orientamento][Stato][Colore];
 
     Pila : ImmagineDaDisegnare := Immagini.Pila;
     Ingranaggio : ImmagineDaDisegnare := Immagini.Ingranaggio;
@@ -867,7 +870,7 @@ Begin
   Bitmap.Canvas.Font.Size := 16;
   Bitmap.Canvas.Font.Style := [fsBold];
   Bitmap.Canvas.Font.Name := 'Verdana';
-  //Bitmap.Canvas.Brush.Color := $800000; //DIRTY: viene colorato di marrone invece che non colorato
+  //Bitmap.Canvas.Brush.Color := $800000; //HACK: viene colorato di marrone invece che non colorato
   DimensioniTesto := Bitmap.Canvas.TextExtent(Testo);
   Bitmap.Canvas.Brush.Style := bsClear;
   Bitmap.Canvas.TextOut(Coordinata2dX(Posizione.X, Posizione.Y, Posizione.Z) + Dimensioni2dCubo.b - DimensioniTesto.cx Div 2, Coordinata2dY(Posizione.X, Posizione.Y, Posizione.Z) + Dimensioni2dCubo.c + 5, Testo);
@@ -1168,7 +1171,9 @@ Begin
                                    //Rotazione.PosizioneAnimazione + 0.09 - Rotazione.PosizioneAnimazione * 0.06
 
   If pElemento^.Movimento.Direzione = -3 Then Begin
-    pElemento^.PosizioneFisica.Z := pElemento^.Posizione.Z + Progresso*50 //DIRTY: viene posto molto in alto invece che nascosto
+    If pElemento^.Tipo <> Bomba
+     //Then
+     Then pElemento^.PosizioneFisica.Z := pElemento^.Posizione.Z + Progresso*50 //HACK: viene posto molto in alto invece che nascosto
   End Else Begin
     pElemento^.PosizioneFisica.X := pElemento^.Posizione.X + pElemento^.Movimento.X * Progresso;
     pElemento^.PosizioneFisica.Y := pElemento^.Posizione.Y + pElemento^.Movimento.Y * Progresso;
@@ -1233,7 +1238,7 @@ Begin
     pElemento := Elementi.Vettore[Indice];
     if pElemento = Nil Then continue;
     //FIXED DIR-TY: viene sempre usato blocco  (anche se il risultato non cambia)
-    //DIRTY: bisognerebbe testare l'instabilità di un elemento solo quando serve
+    //HACK: bisognerebbe testare l'instabilità di un elemento solo quando serve
     If Not pElemento^.Movimento.InEsecuzione Then Begin
       If Spostabile(pElemento, Gravita, -1) Then //Begin
         Accodamento(pElemento, -1);
@@ -1260,7 +1265,7 @@ Begin
   Tipo := pElemento^.Tipo;
 
   If (Tipo = Porta) And (pElemento^.Attivato) Then Exit;
-  If (Tipo = BloccoMetallico) Then Exit;
+ // If (Tipo = BloccoMetallico) Then Exit;
   If (Tipo = BloccoFisso) Then Exit;
 
   If (Tipo = BloccoPuzzle) Then Exit;
@@ -1287,10 +1292,10 @@ Begin
     End Else Begin // Blocco/Robot Di lato
       If (Tipo = Ascensore) And (pElemento^.Attivato) Then Exit;
       If (Tipo = InterruttoreLevetta) Then Exit;
-      If (Tipo = InterruttoreBersaglio) Then Exit;
-      If (Tipo = Pistola) Then Exit;
-      If (Tipo = Specchio) Then Exit;
-      If (Tipo = Calamita) Then Exit;
+     // If (Tipo = InterruttoreBersaglio) Then Exit;
+     // If (Tipo = Pistola) Then Exit;
+    //  If (Tipo = Specchio) Then Exit;
+     // If (Tipo = Calamita) Then Exit;
       If (Tipo = Bomba) Then Exit;
       If EntitaDiAttraversamento = Blocco Then Begin
          If (Tipo = Pila) Then Exit;
@@ -1371,7 +1376,7 @@ Begin
     Exit;
   End;
 
-  //DIRTY: se ci arriva per teletrasporto, immagina che si possa sempre
+  //HACK: se ci arriva per teletrasporto, immagina che si possa sempre
   If (Direzione <> -3) Then Begin
     Destinazione := CoordinateElementoVicino(pElemento^.Posizione, Direzione);
     If Not EntroILimitiDellaScacchiera(Destinazione) Then Begin
@@ -1381,7 +1386,7 @@ Begin
   End;
 
   // FIXED: il robot non deve poter essere mosso da un blocco
-  // DIRTY: forse queste istruzioni non servono più
+  // HACK: forse queste istruzioni non servono più
   If (pElemento^.Tipo = Robot) And (CausaSpostamento = SpintaBlocco) Then Begin
     Spostabile := False;
     Exit;
@@ -1529,7 +1534,7 @@ End;
 Procedure EsecuzioneOperazione;
 Begin
 
-  //DIRTY: spostabile con blocco
+  //HACK: spostabile con blocco
   //If Spostabile(Operazione.pElemento, Blocco, Operazione.Direzione) Then Exit;
   Spostamento(Operazione.pElemento, Operazione.Direzione, Operazione.Destinazione);
 End;
@@ -1544,7 +1549,7 @@ Var
 Begin
   Direzione := pElemento^.Movimento.Direzione;
 
-  // DIRTY: viene usato destinazione invece di posizione
+  // HACK: viene usato destinazione invece di posizione
   PosizioneElementoVicino := CoordinateElementoVicino(pElemento^.Posizione, -1);
 
 
@@ -1559,7 +1564,7 @@ Begin
   If (pElementoVicino <> Nil) Then Begin
     If (pElementoVicino^.Tipo = Ascensore) And Not pElementoVicino^.Attivato And (Direzione <> -1)
       Then CambioStatoAscensore(pElementoVicino, True);
-    If (pElementoVicino^.Tipo = Nastro) And pElementoVicino^.Attivato And Spostabile(pElemento, ScorrimentoNastroSottostante, pElementoVicino^.Orientamento) //DIRTY anche qua per blocco
+    If (pElementoVicino^.Tipo = Nastro) And pElementoVicino^.Attivato And Spostabile(pElemento, ScorrimentoNastroSottostante, pElementoVicino^.Orientamento) //HACK anche qua per blocco
       Then Accodamento(pElemento, pElementoVicino^.Orientamento);
     If (pElementoVicino^.Tipo = Teletrasporto) And (pElemento^.Movimento.Direzione <> -3)
       Then AzionamentoTeletrasporto(pElementoVicino);
@@ -1568,13 +1573,11 @@ Begin
     If (pElementoVicino^.Tipo = InterruttorePuzzle) And (pElemento^.Tipo = BloccoPuzzle) And (pElemento^.Colore = pElementoVicino^.Colore)
       Then CambioStatoInterruttore(pElementoVicino, True);  // BUGBUG: non viene mai riportato a false
     If (pElementoVicino^.Tipo = Pila) And (pElemento^.Tipo = Robot) Then Begin
-      pElementoVicino.Posizione.Z := 100;
-      pElementoVicino.PosizioneFisica.Z := 100;
+      EliminazioneElemento(pElementoVicino);
       CambiaCaricaBatteria(+10);
     End;
     If (pElementoVicino^.Tipo = Ingranaggio) And (pElemento^.Tipo = Robot) Then Begin
-      pElementoVicino.Posizione.Z := 100;     
-      pElementoVicino.PosizioneFisica.Z := 100;
+      EliminazioneElemento(pElementoVicino);
       IngranaggiTrovati := IngranaggiTrovati + 1;
     End;
   End;
@@ -1666,7 +1669,7 @@ Begin
   }
 
   ElementoDiPavimentazione := True;
-  //DIRTY DISABLED: ora porte e ascensori attivati sono considerati pavimentazione
+  //HACK DISABLED: ora porte e ascensori attivati sono considerati pavimentazione
   If Not pElemento^.Attivato And ((Tipo = Ascensore) Or (Tipo = Porta)) Then Exit;
   If Tipo = InterruttorePavimento Then Exit;
   If Tipo = InterruttorePuzzle Then Exit;
@@ -1746,7 +1749,7 @@ Begin
 
 
   //SpostamentoGenerico(pCaricoTeletrasportoGemello, -3, pCarico^.Posizione);
-  
+
 
   //Accodamento(pCarico, -2);
 End;
@@ -1863,7 +1866,7 @@ Begin
 
   Bitmap.Canvas.Font.Color := clBlue;
   Bitmap.Canvas.Font.Size := 16;
-  LarghezzaTestoContinua := Bitmap.Canvas.TextExtent('(Continua)').cx; //DIRTY: testo duplicato
+  LarghezzaTestoContinua := Bitmap.Canvas.TextExtent('(Continua)').cx; //HACK: testo duplicato
   If MenuDiGioco.PrimoElementoDaDisegnare <> 1
     Then Bitmap.Canvas.TextOut(X+(W-LarghezzaTestoContinua) Div 2, 60, '(Continua)');
   If MenuDiGioco.UltimoElementoDaDisegnare <> MenuDiGioco.Voci.Dimensione
@@ -1982,11 +1985,11 @@ Begin
     If pInterruttore.Colore = Elementi.Vettore[Indice]^.Colore Then Begin
       Case Elementi.Vettore[Indice]^.Tipo Of
         Nastro : Elementi.Vettore[Indice]^.Attivato := Attivato; //BUGBUG: porta via in una funzione separata e sposta oggetto sopra il teletrasporto se viene attivato
-       //TODO  Bomba :  If Attivato Then EsplosioneBomba(Elementi.Vettore[Indice])
+        Bomba : If Attivato Then EsplosioneBomba(Elementi.Vettore[Indice]);
         Porta : Elementi.Vettore[Indice]^.Attivato := Not Elementi.Vettore[Indice]^.Attivato;
-        Calamita : Elementi.Vettore[Indice]^.Attivato := Attivato;
+       // Calamita : Elementi.Vettore[Indice]^.Attivato := Attivato;
        //TODO Specchio : si dovrebbe girare?
-        Pistola : Elementi.Vettore[Indice]^.Attivato := Attivato;
+       // Pistola : Elementi.Vettore[Indice]^.Attivato := Attivato;
       End;
     End;
 
@@ -2110,7 +2113,7 @@ Var
   Base            : Array[1..4] Of
 Begin
 
-  For IndiceColore := 1 To 5 Do Begin      //DIRTY: vengono usati direttamente 5 e 4
+  For IndiceColore := 1 To 5 Do Begin      //HACK: vengono usati direttamente 5 e 4
     For IndiceVariante := 1 To 4 Do Begin
       Colorizzazioni[IndiceColore, IndiceVariante]
     End;
@@ -2182,7 +2185,7 @@ Begin
     Parametri.DelimitedText := Riga;
     Try     //BUGBUG: questo try non sembra funzionare
      //Indice:=
-      //DIRTY: riga lunghissima piena di strtoint
+      //HACK: riga lunghissima piena di strtoint
       If StrToInt(Parametri[0]) = 0
         Then Begin
           InizializzazioneScacchiera(StrToInt(Parametri[1]));
@@ -2205,7 +2208,7 @@ Function IntToTipoElemento;
 Var
   Tipo : TTipoElemento;
 Begin
-  // DIRTY: un ciclo semplicemente per convertire un intero nel corrispondente TTipoElemento
+  // HACK: un ciclo semplicemente per convertire un intero nel corrispondente TTipoElemento
   For Tipo := Low(TTipoElemento) To High(TTipoElemento) Do
     If Ord(Tipo) = Numero Then IntToTipoElemento := Tipo;
   //IntToTipoElemento := TTipoElemento;
@@ -2259,7 +2262,7 @@ Begin
   NomeDescrittivoLivello := Stringhe[0];
 }
 
-  //DIRTY: meno quarantuno
+  //HACK: meno quarantuno
   NomeDescrittivoLivello := Copy(NomeFile, 1, Length(NomeFile) - 41);  //BUGBUG: se il nome non contiene il GUID non si vede il nome del livello, ma col metodo del TStringList suddivide anche dove ci sono gli spazi
 
 End;
@@ -2306,7 +2309,7 @@ Procedure RaggiungimentoTraguardo;
 Begin
 
 
-  //DIRTY: due scritture sul registro con codice duplicato
+  //HACK: due scritture sul registro con codice duplicato
   If( IngranaggiTrovati = IngranaggiTotali) And (IngranaggiTotali>0) {Hai preso tutte le ruote dentate} Then Begin
     LivelliSuperati.WriteInteger(IdentificatoreLivelloDaNomeFile(Livello), 1);
   End Else Begin
@@ -2345,6 +2348,51 @@ Begin
   if (Energia = 0) Then MostraEsitoPartita('Batteria esaurita!', False);
 End;
 
+
+
+Procedure EsplosioneBomba;
+Var
+  pElementoVicino                      : TpElemento;
+  Direzione : Integer;
+  DestinazioneBomba : TPosizione3d;
+Begin
+  pBomba.Attivato := True;
+  DestinazioneBomba.X := 1;
+  DestinazioneBomba.Y := 1;
+  DestinazioneBomba.Z := 100;
+  AccodamentoGenerico(pBomba, -3, DestinazioneBomba);
+  For Direzione := 0 To 3 Do Begin
+    pElementoVicino := ElementoInPosizione(CoordinateElementoVicino(pBomba.Posizione, Direzione), False);
+    If(pElementoVicino <> Nil) Then Begin
+      If(pElementoVicino.Tipo = BloccoGhiaccio) Then Begin
+        EliminazioneElemento(pElementoVicino);
+        //AccodamentoGenerico(pElementoVicino, -3, DestinazioneBomba);
+      End Else Begin
+        If(Spostabile(pElementoVicino, Esplosione,   Direzione)) Then Begin
+          Accodamento(pElementoVicino, Direzione);
+        End;
+      End;
+    End;
+  End;
+
+
+  //If pCarico = Nil Then MessaggioErrore('Il teletrasporto è stato azionato senza che sia presente un carico');
+
+
+
+
+
+
+  //SpostamentoGenerico(pCaricoTeletrasportoGemello, -3, pCarico^.Posizione);
+
+End;
+
+
+Procedure EliminazioneElemento;
+Begin
+  pElemento.Posizione.Z := 100;
+  pElemento.PosizioneFisica.Z := 100;
+End;
 
 
 end.
