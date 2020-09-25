@@ -26,7 +26,7 @@ Image | Name | Description
 ![Fixed block](https://raw.githubusercontent.com/antiufo/tinker/master/images/elements/image014.png) | Fixed block | Cannot be moved or destroyed.
 ![Ice block](https://raw.githubusercontent.com/antiufo/tinker/master/images/elements/image015.png) | Ice block | Can be destroyed by an adjacent bomb, but cannot be moved.
 ![Movable block](https://raw.githubusercontent.com/antiufo/tinker/master/images/elements/image016.png) | Movable block | Can be moved by the robot.
-![Puzzle block](https://raw.githubusercontent.com/antiufo/tinker/master/images/elements/image017.png) | Movable block | Can be moved by the robot, and is able to toggle a _puzzle switch_ of the same color.
+![Puzzle block](https://raw.githubusercontent.com/antiufo/tinker/master/images/elements/image017.png) | Puzzle block | Can be moved by the robot, and is able to toggle a _puzzle switch_ of the same color.
 
 ## Keyboard commands
 Key | Command

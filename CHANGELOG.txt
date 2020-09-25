@@ -1,0 +1,141 @@
+﻿================
+  Changelog
+================
+
+2009-02-12
+TEntitaDiAttraversamento e TCausaSpostamento (nuovo) ora corrispondono effettivamente a quello che succede
+
+2009-02-01
+Nuove immagini per Teletrasporto e Traguardo
+Immagini segnaposto per tutti gli elementi
+Testo "Caricamento"
+
+2009-01-15
+Aggiunti livelli 2
+MessaggioErrore non usa più titolo "Errore" visto che è temporaneamente usata anche per debug
+
+2008-11-30
+Caricamento livelli da file
+Associazione valori fissi per valori TTipoElemento
+DimensionamentoScacchiera
+Scorrimento menu
+Icone per voci menu
+
+2008-11-29
+Colorizzazione immagini, CaricamentoImmagine è ora polimorfa
+Disegnati: Interruttore levetta, Interruttore Puzzle, Blocco Puzzle, Bomba
+Interruttore levetta
+CambioStatoInterruttore
+Schermata nera di caricamento
+5 Colorizzazioni: Arancio, viola, verde, verde acqua, panna
+Menu di caricamento, con enumerazione (per ora non fa distinzione file/cartelle)
+
+
+2008-11-28
+La scacchiera e lo sfondo vengono disegnati solo quando necessario e mantenuti in un buffer
+Menu
+ALT+INVIO: switch schermo intero
+
+2008-11-27
+Diverse velocità per caduta e spostamento
+Blocco metallico
+Nuova immagine per BloccoMobile
+Effetto animazione teletrasporto
+Rinominati "Animazione" in "Movimento"
+Blocco ghiaccio
+Traguardo
+
+2008-11-26
+Nastri trasportatori
+Ascensori completamente funzionanti
+Teletrasporti
+Disattivato temporaneamente (?) sistema della coda
+Morte per schiacciamento e caduta dall'alto
+
+
+2008-11-25
+ho capito che devo suddividere gli elementi in Pavimentazioni, Blocchi e Oggetti
+
+2008-11-24
+Viene ora usata una coda per gestire le operazioni da eseguire
+Gli ascensori riescono ora a sollevare pile di elementi (peccato che una volta saliti scendono subito)
+Tutti gli elementi possono ora cadere
+
+2008-11-23
+Cambio risoluzione e schermo intero
+Spostamento() viene ora chiamata ricorsivamente all'interno della procedura stessa, non come evento di fine animazione
+Gestione eventi per elementi sottostanti
+Pulizia codice
+
+2008-11-22
+PosizioneFisica e Posizione al posto di Posizione e Destinazione. Ora Posizione viene usata solo nelle operazioni logiche, PosizioneFisica per il disegno.
+Completata ElementoAttraversabile
+Gli eventi vengono ora gestiti alla fine dell'animazione (bugbug, anche quelli per lo spostamento)
+Ascensore funzionante
+Direzioni -1 e -2
+
+2008-11-21
+ControlloPosizioneRaggiungibile, ElementoAttraversabile
+Completato Enum TTipoElemento con tutti i possibili valori
+
+2008-11-18
+Pensata profonda: tabella comportamento di tutti i pezzi e tutti gli eventi
+
+2008-11-17
+Sostantivizzazione nomi procedure
+Divisione tra logica di gioco e disegno scena
+
+2008-11-16
+Ascensori
+Animazioni
+Animazione e Destinazione in TElemento
+Caduta
+Spostamento blocchi mobili, anche sovrapposti
+
+2008-11-15
+Ombra sotto l'ometto di prova
+Controllo collisione con altri elementi
+In grado di disegnare oggetti con lo stesso ordine di disegno
+Aggiornamento priorità disegno è ora gestito in un ciclo prima di disegnare la scena
+TpElemento, ora non vengono più usati indici o passati direttamente TElemento
+Viene ora utilizzato TPosizione3d dalle varie funzioni
+Direzionamento e movimento robot
+Per girare la scacchiera si usa ora + e - (Tn)
+
+2008-11-13
+Orientamento elementi, rotazione e visualizzazione QuattroImmagini
+Gestore eventi tastiera OnKeyDown anziché OnKeyPress con 'f' e 'g'
+Aggiunto 4 prima di calcolare il modulo per le rotazioni
+Robot
+
+2008-11-12
+Rotazione elementi
+Disegno ordinato dal più lontano al più vicino
+Vettore Elementi
+rotazione con animazione decelerante
+
+2008-11-11
+Rotazione
+Scritto file history
+
+2008-11-10
+Double buffer
+Icona e informazioni di versione
+
+2008-11-09
+Scacchiera
+Bordo scacchiera
+
+2008-11-08
+Creato progetto Delphi
+Posizionamento bitmap in spazio 3d
+
+2008-11-04
+Creata lista oggetti gioco originale Microsoft Tinker
+
+2008-11-03
+Prof Filz da l'ok per il progetto
+
+2008-??-??
+Scaricati Windows Ultimate Extras
+
